@@ -14,6 +14,8 @@ var config = {
 };
 firebase.initializeApp(config);
 
+const auth = firebase.auth();
+
 
 function initMap() {
     var myLatLng = { lat: 43.0731, lng: -89.4012 };
