@@ -16,7 +16,7 @@ firebase.initializeApp(config);
 
 const auth = firebase.auth();
 
-
+// create map
 function initMap() {
     var myLatLng = { lat: 43.0731, lng: -89.4012 };
 
@@ -28,41 +28,22 @@ function initMap() {
 
 }
 
-/*
-function writeNewPost(uid, username, picture, title, body) {
-    // A post entry.
-    var postData = {
-        dairy: dairy1,
-        water: water1,
-        name: body,
-    };
-
-    // Get a key for a new Post.
-    var newPostKey = firebase.database().ref().child('stores').push().key;
-
-    // Write the new post's data simultaneously in the posts list and the user's post list.
-    var updates = {};
-    updates['/stores/' + newPostKey] = postData;
-    //updates['/user-posts/' + uid + '/' + newPostKey] = postData;
-
-    return firebase.database().ref().update(updates);
-}
-**/
-
 //Test connection to the Firestore
 var db = firebase.firestore();
 
+//run once at refresh to display the markers
 var checkedValue = $('.messageCheckbox:checked').val();
 db.collection("stores")
     .get()
     .then(function (querySnapshot) {
         querySnapshot.forEach(function (doc) {
             // doc.data() is never undefined for query doc snapshots
-            console.log(doc.id, " => ", doc.data());
+            //console.log(doc.id, " => ", doc.data());
             var latitude = doc.data().lat;
             var longitude = doc.data().long;
             var name = doc.data().name;
 
+            // custom icon based on availability
             var Customicons = {
                 low: {
                     icon: 'img/low.png'
@@ -74,6 +55,7 @@ db.collection("stores")
                     icon: 'img/none.png'
                 }
             };
+            // reading specific data from Firebase database
             var water = doc.data().water;
             var dairy = doc.data().dairy;
             var cleaning = doc.data().cleaning;
@@ -84,10 +66,9 @@ db.collection("stores")
 
             var address = doc.data().Address;
 
-            //checkedValue = "bread_grain";
-            console.log(checkedValue);
-            console.log(bread);
 
+
+            // display availability based on the product type that is checked
             if (checkedValue == "water") {
                 var producttype = water;
             }
@@ -109,10 +90,11 @@ db.collection("stores")
             if (checkedValue == "cleaning_products") {
                 var producttype = cleaning;
             }
-            console.log(producttype);
+
 
             var icon = Customicons[producttype] || {};
 
+            // create the marker info window text
             var contentString = "<p>" + "<b>" + "Store Name: " + "</b>" + name + "<br />" +
                 "<b>" + "Address: " + "</b>" + address + "<br />" +
                 "<b>" + "Dairy: " + "</b>" + dairy + "<br />" +
@@ -123,15 +105,11 @@ db.collection("stores")
                 "<b>" + "Paper Products: " + "</b>" + paper + "<br />" +
                 "<b>" + "Cleaning Products: " + "</b>" + cleaning + "<br />" +
                 "</p>";
-
+            // marker infowindow
             var infowindow = new google.maps.InfoWindow({
                 content: contentString
             });
-
-
-            //console.log(water);
-            //console.log(latitude);
-            //console.log(longitude);
+            // Add the markers to the map
             var marker = new google.maps.Marker({
                 position: {
                     lat: latitude,
@@ -161,34 +139,17 @@ function setMapOnAll(map) {
     }
 }
 
-
-
-
-
-
-
-
+// Run each time a box is checked or a drop down list is changed
+// This updates the markers that are displayed
 function changecheck() {
     var checkedValue = $('.messageCheckbox:checked').val();
-    //alert(checkedValue);
 
-    console.log(markers);
-
-
-/*
-    //NEED TO ADD CODE TO CLEAR ALL MARKERS
-    function clearMarkers(){
-        setMapOnAll(null);
-    }
-    function deleteMarkers(){
-        clearMarkers();
-        markers=[];
-    }**/
+    // remove all the existing markers
     setMapOnAll(null);
     markers=[];
     console.log(markers);
 
-
+    // runs through each store in the database and adds a marker
     db.collection("stores")
         .get()
         .then(function (querySnapshot) {
@@ -265,21 +226,17 @@ function changecheck() {
                     content: contentString
                 });
 
-
-                //console.log(water);
-                //console.log(latitude);
-                //console.log(longitude);
-
+                // What store is selected from the dropdown list
                 var storenameselection = document.getElementById("store_label_one");
                 var storenameselectionresult = storenameselection.options[storenameselection.selectedIndex].value;
                 console.log(storenameselectionresult);
-
+                // What store type is selected
                 var storetypeselection = document.getElementById("store_type_one");
                 var storetypeselectionresult = storetypeselection.options[storetypeselection.selectedIndex].value;
                 console.log(storetypeselectionresult);
 
 
-
+                // Only adds markers if the user has selected all stores or a specific store
                 if ((storenameselectionresult=="All" || storenameselectionresult==name) && (storetypeselectionresult=="All" || storetypeselectionresult==type)) {
                     var marker = new google.maps.Marker({
                         position: {
@@ -303,12 +260,10 @@ function changecheck() {
             console.log("Error getting documents: ", error);
         });
 }
-
+// updates the firebase database based on the report that is filled out
 function updateFirebase(){
-//    const fb=firebase.database().ref()
-//    water = document.getElementsByName("water").value
-    //function myfunction(water){
 
+    // get the availability of each product from the report
     var ele = document.getElementsByName("water");
         for (var i = 0, length = ele.length; i < length; i++) {
         if (ele[i].checked) {
@@ -378,25 +333,12 @@ function updateFirebase(){
             break;
         }
     }
-        //console.log(ele.length);
-    //}
-
-    /*
-    var storename = document.getElementsByName("store_label");
-    for (var i = 0, length = storename.length; i < length; i++) {
-        if (storename[i].selected) {
-            var storeupdate= storename[i].value;
-            var q = storeupdate.toString();
-            console.log(q);
-            // only one radio can be logically checked, don't check the rest
-            break;
-        }
-    }**/
+    // Get the name of the store to be updated
     var storename = document.getElementById("store_label");
     var storenameresult = storename.options[storename.selectedIndex].value;
-    //alert(storenameresult);
 
 
+    // Update the Firebase database with the info from the report
     db.collection('stores').doc(storenameresult).update({
         water: newwaterlevel,
         dairy: newdairy,
@@ -406,14 +348,11 @@ function updateFirebase(){
         paper: newpaper,
         cleaning: newcleaning
     })
-    //var hellop = "hellothere";
-    //console.log(hellop);
-    //location.reload();
+
+    // Wait one second then reload the map with updated info
     setTimeout(location.reload.bind(location), 1000);
     return false;
 
 }
 
-//db.collection('stores').doc('ALDI').update({
-//    water: 'low'
-//})
+
